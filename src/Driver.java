@@ -21,6 +21,7 @@ public class Driver {
 		// See if I can get git hub working
 		double[][] Atest = {{1,2,0,0,0},{1,1,1,0,0},{2,1,0,1,0},{0,1,0,0,1}};
 		double[] btest = {2,3,1};
+		Matrix A = new Matrix(Atest);
 		numNonBasics = 2;
 		numBasics = 3;
 		totalVariables = 5;
@@ -32,10 +33,9 @@ public class Driver {
 				+ "         y + s3 = 1\n");
 		
 		System.out.println("HARDCODED STANDARD FORM MATRIX TO TEST");
-		System.out.println("======== A ========");
-		System.out.println(" x1  x2  x3  x4  x5");
-		printDoubleMatrix(Atest);
-		System.out.println("\n");
+		System.out.println("========= A =========");
+		System.out.print("  x1  x2  x3  x4  x5");
+		A.print(2, 0);
 		
 		System.out.println("HARDCODED b CONSTRAINTS");
 		System.out.println("==== b ====");
