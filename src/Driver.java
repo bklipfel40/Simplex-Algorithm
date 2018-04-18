@@ -3,10 +3,11 @@ import Jama.Matrix;
 public class Driver {
 	
 	//this will be the table/tableaux (pg 230in book) in the simplex algorithm, and the b
-	static double[][] table;
-	static double[] limits;
-	//keep track of how many slack variables we have
-	static int[] slacks;
+	static Matrix A;
+	static double[] b;
+	static char[] types;
+	static Matrix constraints;
+	
 	//these will be supplied in first two numbers of the file (will just hardcode for now)
 	static int m = 0; //number of constraints
 	static int n = 0; //number of variables
@@ -19,18 +20,19 @@ public class Driver {
 
 	public static void main(String[] args) {
 		// See if I can get git hub working
-		double[][] Atest = {{1,2,0,0,0},{1,1,1,0,0},{2,1,0,1,0},{0,1,0,0,1}};
-		double[] btest = {2,3,1};
-		Matrix A = new Matrix(Atest);
-		numNonBasics = 2;
-		numBasics = 3;
-		totalVariables = 5;
-		double [] x0 = initialize( Atest, btest );
+		double[][] Atest = {{1,0,1,0,0,0},{0,1,0,1,0,0},{1,1,0,0,1,1},{4,2,0,0,0,1}};
+		double[] btest = {1000,1500,1750,4800};
+		A = new Matrix(Atest);
 		
-		System.out.println("max  x + 2y \n"
-				+ "s.t. x + y + s1 = 2\n"
-				+ "    2x + y + s2 = 3\n"
-				+ "         y + s3 = 1\n");
+		constraints = new Matrix(btest,4);
+		
+		numNonBasics = 2;
+		numBasics = 4;
+		totalVariables = 6;
+		types = new char[totalVariables];
+		
+		double[] x0 = initialize( Atest, btest );
+		
 		
 		System.out.println("HARDCODED STANDARD FORM MATRIX TO TEST");
 		System.out.println("========= A =========");
@@ -45,6 +47,8 @@ public class Driver {
 		System.out.println("INITAL FEASIBLE SOLUTION");
 		System.out.println(" x1  x2  x3  x4  x5");
 		printSingleMatrix( x0 );
+		
+		Matrix test2 = simplexDirections();
 	}
 	
 	/*
@@ -58,19 +62,23 @@ public class Driver {
 		//initialize a starting Basis matrix B, which will be all Basic variables
 		double B[] = new double[totalVariables]; 
 		int count = 0;
+		int idx = numNonBasics;
 		//we want to set our initial nonBasics to 0
 		for( int i = numNonBasics; i < totalVariables /*numConstraints*/; i++ ) {
-			B[count] = A[i-1][i];
+			B[count] = A[count][idx];
+			idx++;
 			count++;
 		}
 		count = 0;
 		//set the non basic variables to be 0
 		for( int i = 0; i < numNonBasics; i++) {
 			x[i] = 0;
+			types[i] = 'N';
 		}
 		//set the basic variables to what equals it to b
 		for( int i = numNonBasics; i < totalVariables; i++ ) {
 			x[i] = b[count]/B[count];
+			types[i] = 'B';
 			count++;
 		}
 	//construct corresponding basic solution x(0)
@@ -79,9 +87,36 @@ public class Driver {
 	//For now the above just sets every slack variable to the non basics by default, is this an ok
 	// way to do this?
 	
-	//step 1
-	static void simplexDirections( double[][] A, double[] b, double[] c) {	
-		
+	//step 1, return an array of each simplex direction using our current solution and basic variables
+	static Matrix simplexDirections( ) {	
+		int count = 0;
+		//this will be used to return a matrix of all possible simplex directions
+		Matrix d = new Matrix( numBasics, totalVariables, 0 );
+		//this will be used to solve a system of equations to get the direction for d
+		Matrix temp = new Matrix( A.getRowDimension(), numBasics, 0);
+		//go through and find each non-basic, set the non-basic to 1 and then 		
+		for( int i = 0; i < totalVariables; i++ ) {
+			//we have come across a nonBasic
+			if( types[i] == 'N' ) {
+				//solve the system of equations 
+				for( int j = 0; j < totalVariables; j++ ) {
+					for( int idx = 0; idx < totalVariables; idx++ ) {
+						if( types[idx] == 'N' && idx == i ) {//this is the non-basic we are solving, set to 1
+							temp.set(j, idx, 1);
+						}
+						else if( types[idx] == 'N' && idx != i) {//set this non-basic to 0
+							temp.set(j, idx, 0);
+						}
+						else if( types[idx] == 'B' ){
+							temp.set(j, idx, A.get(j, idx));
+						}
+					}
+				}
+				temp.print(0, 0);
+				return temp;
+			}
+		}
+		return d;
 	}
 	
 	//step 2
