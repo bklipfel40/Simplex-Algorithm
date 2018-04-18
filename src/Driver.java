@@ -45,7 +45,7 @@ public class Driver {
 		
 		System.out.print("\n");
 		System.out.println("INITAL FEASIBLE SOLUTION");
-		System.out.println(" x1  x2  x3  x4  x5");
+		System.out.println(" x1  x2   x3     x4     x5     x6");
 		printSingleMatrix( x0 );
 		
 		Matrix test2 = simplexDirections();
@@ -90,16 +90,17 @@ public class Driver {
 	//step 1, return an array of each simplex direction using our current solution and basic variables
 	static Matrix simplexDirections( ) {	
 		int count = 0;
+		Matrix zeroConstraints = new Matrix(constraints.getRowDimension(), 1);
 		//this will be used to return a matrix of all possible simplex directions
 		Matrix d = new Matrix( numBasics, totalVariables, 0 );
 		//this will be used to solve a system of equations to get the direction for d
-		Matrix temp = new Matrix( A.getRowDimension(), numBasics, 0);
+		Matrix temp = new Matrix( A.getRowDimension(), totalVariables, 0);
 		//go through and find each non-basic, set the non-basic to 1 and then 		
 		for( int i = 0; i < totalVariables; i++ ) {
 			//we have come across a nonBasic
 			if( types[i] == 'N' ) {
 				//solve the system of equations 
-				for( int j = 0; j < totalVariables; j++ ) {
+				for( int j = 0; j < A.getRowDimension(); j++ ) {
 					for( int idx = 0; idx < totalVariables; idx++ ) {
 						if( types[idx] == 'N' && idx == i ) {//this is the non-basic we are solving, set to 1
 							temp.set(j, idx, 1);
@@ -113,7 +114,9 @@ public class Driver {
 					}
 				}
 				temp.print(0, 0);
-				return temp;
+				zeroConstraints.print(0, 0);
+				Matrix ret = temp.solve(zeroConstraints);
+				ret.print(0, 0);
 			}
 		}
 		return d;
