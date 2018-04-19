@@ -20,7 +20,7 @@ public class Driver {
 
 	public static void main(String[] args) {
 		// See if I can get git hub working
-		double[][] Atest = {{1,0,1,0,0,0},{0,1,0,1,0,0},{1,1,0,0,1,1},{4,2,0,0,0,1}};
+		double[][] Atest = {{1,0,1,0,0,0},{0,1,0,1,0,0},{1,1,0,0,1,0},{4,2,0,0,0,1}};
 		double[] btest = {1000,1500,1750,4800};
 		A = new Matrix(Atest);
 		
@@ -33,10 +33,14 @@ public class Driver {
 		
 		double[] x0 = initialize( Atest, btest );
 		
+		for( int i = 0; i < totalVariables; i++ ) {
+			System.out.print(types[i]);
+		}
+		System.out.print("\n");
 		
 		System.out.println("HARDCODED STANDARD FORM MATRIX TO TEST");
 		System.out.println("========= A =========");
-		System.out.print("  x1  x2  x3  x4  x5");
+		System.out.print("  x1  x2   x3  x4  x5  x6");
 		A.print(2, 0);
 		
 		System.out.println("HARDCODED b CONSTRAINTS");
@@ -81,6 +85,7 @@ public class Driver {
 			types[i] = 'B';
 			count++;
 		}
+		
 	//construct corresponding basic solution x(0)
 		return x;
 	}
@@ -92,20 +97,20 @@ public class Driver {
 		int count = 0;
 		Matrix zeroConstraints = new Matrix(constraints.getRowDimension(), 1);
 		//this will be used to return a matrix of all possible simplex directions
-		Matrix d = new Matrix( numBasics, totalVariables, 0 );
+		Matrix deltaX = new Matrix( numNonBasics, totalVariables, 0 );
 		//this will be used to solve a system of equations to get the direction for d
 		Matrix temp = new Matrix( A.getRowDimension(), totalVariables, 0);
 		//go through and find each non-basic, set the non-basic to 1 and then 		
 		for( int i = 0; i < totalVariables; i++ ) {
-			//we have come across a nonBasic
+			//we have come across a Basic
 			if( types[i] == 'N' ) {
 				//solve the system of equations 
 				for( int j = 0; j < A.getRowDimension(); j++ ) {
 					for( int idx = 0; idx < totalVariables; idx++ ) {
-						if( types[idx] == 'N' && idx == i ) {//this is the non-basic we are solving, set to 1
-							temp.set(j, idx, 1);
+						if( types[idx] == 'N' && idx == i ) {//set the current basic to 1
+							temp.set(j, idx, A.get(j, idx));
 						}
-						else if( types[idx] == 'N' && idx != i) {//set this non-basic to 0
+						else if( types[idx] == 'N' && idx != i) {//set every other basic to 0
 							temp.set(j, idx, 0);
 						}
 						else if( types[idx] == 'B' ){
@@ -119,7 +124,7 @@ public class Driver {
 				ret.print(0, 0);
 			}
 		}
-		return d;
+		return deltaX;
 	}
 	
 	//step 2
@@ -136,7 +141,7 @@ public class Driver {
 	static void updateAndAdvance() {
 		
 	}
-	
+	//Turns out the library covers both of these
 	static void printDoubleMatrix( double[][] matrix ) {
 		for( int i = 0; i < matrix.length; i++ ) {
 			for( int j = 0; j < matrix[i].length; j++ ) {
