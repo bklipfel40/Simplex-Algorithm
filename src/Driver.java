@@ -4,7 +4,6 @@ public class Driver {
 	
 	//this will be the table/tableaux (pg 230in book) in the simplex algorithm, and the b
 	static Matrix A;
-	static double[] b;
 	static char[] types;
 	static Matrix constraints;
 	
@@ -95,35 +94,55 @@ public class Driver {
 	//step 1, return an array of each simplex direction using our current solution and basic variables
 	static Matrix simplexDirections( ) {	
 		int count = 0;
-		Matrix zeroConstraints = new Matrix(constraints.getRowDimension(), 1);
+		int row = 0;
+		int col = 0;
+		
 		//this will be used to return a matrix of all possible simplex directions
 		Matrix deltaX = new Matrix( numNonBasics, totalVariables, 0 );
-		//this will be used to solve a system of equations to get the direction for d
-		Matrix temp = new Matrix( A.getRowDimension(), totalVariables, 0);
-		//go through and find each non-basic, set the non-basic to 1 and then 		
+		//this will be used to solve a system of Basics to get the direction for d
+		Matrix basics = new Matrix( A.getRowDimension(), numBasics, 0);
+		
+		//This matrix we will negate and set the basics equal to it to get the direction values for the basics
+		Matrix negateEqual;
+		Matrix basicDirections;
+		
+		//go through and build a matrix of just Basics
+		for( int i = 0; i < A.getRowDimension(); i++ ) {
+			for( int j = 0; j < totalVariables; j++ ) {
+				if( types[j] == 'B' ) {
+					basics.set(row, col, A.get(i, j));
+					col = (col+1)%numBasics;
+				}
+			}
+			row++;
+		}
+		//now that we have a matrix of just basics we exchange the nonbasics 
 		for( int i = 0; i < totalVariables; i++ ) {
-			//we have come across a Basic
 			if( types[i] == 'N' ) {
-				//solve the system of equations 
-				for( int j = 0; j < A.getRowDimension(); j++ ) {
-					for( int idx = 0; idx < totalVariables; idx++ ) {
-						if( types[idx] == 'N' && idx == i ) {//set the current basic to 1
-							temp.set(j, idx, A.get(j, idx));
+				col = 0;
+				negateEqual = A.getMatrix(0, A.getRowDimension()-1, i, i);
+				negateEqual = negateEqual.times(-1);
+				basicDirections = basics.solve(negateEqual);
+				basicDirections = basicDirections.transpose();
+				//now that we have the basic directions set the nonBasic directions in our return matrix
+				for( int j = 0; j < totalVariables; j++ ) {
+					if( types[j] == 'N' ) {
+						if( i == j ) {
+							deltaX.set(count, j, 1);
 						}
-						else if( types[idx] == 'N' && idx != i) {//set every other basic to 0
-							temp.set(j, idx, 0);
-						}
-						else if( types[idx] == 'B' ){
-							temp.set(j, idx, A.get(j, idx));
+						else {
+							deltaX.set(count, j, 0);
 						}
 					}
+					else {//variable is a basic, set it to the basic direction
+						deltaX.set(count, j, basicDirections.get(0, col));
+						col++;
+					}
 				}
-				temp.print(0, 0);
-				zeroConstraints.print(0, 0);
-				Matrix ret = temp.solve(zeroConstraints);
-				ret.print(0, 0);
+				count++;
 			}
 		}
+		deltaX.print(0, 0);
 		return deltaX;
 	}
 	
