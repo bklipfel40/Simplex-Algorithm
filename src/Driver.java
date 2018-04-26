@@ -6,6 +6,7 @@ public class Driver {
 	static Matrix A;
 	static char[] types;
 	static Matrix constraints;
+	static int[] objectiveFunction;
 	
 	//these will be supplied in first two numbers of the file (will just hardcode for now)
 	static int m = 0; //number of constraints
@@ -19,6 +20,10 @@ public class Driver {
 
 	public static void main(String[] args) {
 		// See if I can get git hub working
+		objectiveFunction = new int[2];
+		objectiveFunction[0] = 12;
+		objectiveFunction[1] = 9;
+		
 		double[][] Atest = {{1,0,1,0,0,0},{0,1,0,1,0,0},{1,1,0,0,1,0},{4,2,0,0,0,1}};
 		double[] btest = {1000,1500,1750,4800};
 		A = new Matrix(Atest);
@@ -52,6 +57,10 @@ public class Driver {
 		printSingleMatrix( x0 );
 		
 		Matrix test2 = simplexDirections();
+		
+		Matrix direction = optimalityCheck(test2);
+		
+		direction.print(0, 0);
 	}
 	
 	/*
@@ -147,8 +156,39 @@ public class Driver {
 	}
 	
 	//step 2
-	static void optimalityCheck() {
+	//check our array of possible directions and find whether any are optimal, and if so, find the best
+	//direction to go
+	static Matrix optimalityCheck( Matrix directions ) {
+		Matrix direction = new Matrix(1, totalVariables);
+		double values[] = new double[directions.getRowDimension()];
+		int bestIndex = -1;
+		double maxVal = 0;
 		
+		//go through each direction and find the values for the objective function
+		for( int i = 0; i < directions.getRowDimension(); i++ ) {
+			for( int j = 0; j < objectiveFunction.length; j++ ) {
+				values[i] = values[i] + (directions.get(i, j)*objectiveFunction[j]);
+			}
+			//System.out.println(values[i]);
+		}
+		//check and see if they are optimal and which one is the best (I think this only factors max for now
+		for( int i = 0; i < values.length; i++ ) {
+			if( values[i] > 0 && values[i] > maxVal) {
+				bestIndex = i;
+				maxVal = values[i];
+			}
+		}
+		//if we found an improving optimal direction return it
+		if( bestIndex >= 0 ) {
+			//this is the optimal direction
+			direction = directions.getMatrix(bestIndex, bestIndex, 0, totalVariables-1);
+		}
+		//otherwise we have already found an optimal solution
+		else {
+			//signal that we are currently at an optimal solution
+			return null;
+		}
+		return direction;
 	}
 	
 	//step 3
