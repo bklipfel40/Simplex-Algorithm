@@ -8,24 +8,43 @@ import java.util.Scanner;
 import Jama.Matrix;
 
 public class Driver {
+	//global variable for the current solution
 	static double[] x;
+	//the number of iterations we have had
 	static int iteration;
+	//global variable representing the A table in the simplex method
 	static Matrix A;
+	//this will determine whether each variable is basic or non-basic, denoted 'N' or 'B'
 	static char[] types;
+	//this is the b matrix
 	static Matrix constraints;
+	//this will be the objective function
 	static double[] objectiveFunction;
+	//this will be the current directions that we can possible go
 	static Matrix directions;
+	//saves whether the matrix is a max or a min
 	static String maxMin;
 	//these will be supplied in first two numbers of the file (will just hardcode for now)
-	static int m = 0; //number of constraints
-	static int n = 0; //number of variables
+	//number of constraints
+	static int m = 0;
+	//number of variables
+	static int n = 0;
+	//number of non basics
 	static int numNonBasics;
+	//number of basics
 	static int numBasics;
+	//the total variables, both slack and objective
 	static int totalVariables;
+	//boolean to help determine when we are at the optimal solution
 	static boolean isDone = false;
+	//boolean to determine if the model is unbounded
 	static boolean isUnbounded = false;
+	//global variable for the current objective value
 	static double value = 0;
+	//global variable to keep track of the current step size
 	static double stepSize;
+	//global variable to determine whether artificial variables are needed or not
+	static boolean isStandard = true;
 
 	public Driver( String filename ) throws IOException {
 		//initialize all of the global variables
@@ -58,11 +77,11 @@ public class Driver {
 			for( int i = 0; i < n; i++ ) {
 				objectiveFunction[i] = input.nextDouble();
 			}
-			if( maxMin.toUpperCase().equals("MIN") ) {
-				for( int i = 0; i < n; i++ ) {
-					objectiveFunction[i] = (objectiveFunction[i] * -1);
-				}
-			}
+			//if( maxMin.toUpperCase().equals("MIN") ) {
+			//	for( int i = 0; i < n; i++ ) {
+			//		objectiveFunction[i] = (objectiveFunction[i] * -1);
+			//	}
+			//}
 			//now we have to construct A
 			A = new Matrix( m, totalVariables, 0);
 			while( constraintCount < m ) {
@@ -125,7 +144,7 @@ public class Driver {
 		}
 		System.out.println("\n");
 		System.out.println("=============== A ===============");
-		A.print(3, 0);
+		A.print(0, 2);
 		System.out.println("=================================\n");
 
 		System.out.println("===============b^T===============");
@@ -149,6 +168,14 @@ public class Driver {
 			directions = simplexDirections();
 			directions = optimalityCheck( directions );
 		}
+		
+		//if( maxMin.toUpperCase().equals("MIN")) {
+		//	value = value*-1;
+		//	for( int i = 0; i < totalVariables; i++ ) {
+		//		x[i] = x[i] * -1;
+		//	}
+		//}
+		
 
 		if( isUnbounded == false ) {
 			System.out.println("===============Optimal Values for X===============\n");
@@ -183,7 +210,6 @@ public class Driver {
 		}
 		System.out.println(" ");
 		iteration++;
-
 	}
 
 	/*
@@ -307,15 +333,15 @@ public class Driver {
 				}	
 			}
 		}
-		//else if( maxMin.toUpperCase().equals("MIN") ) {
-		//	for( int i = 0; i < values.length; i++ ) {
-		//		if( values[i] < 0 && values[i] < bestVal) {
-		//			bestIndex = i;
-		//			bestVal = values[i];
-		//		}
-		//	}
+		else if( maxMin.toUpperCase().equals("MIN") ) {
+			for( int i = 0; i < values.length; i++ ) {
+				if( values[i] < 0 && values[i] < bestVal) {
+					bestIndex = i;
+					bestVal = values[i];
+				}
+			}
 
-		//}
+		}
 		//Console printing=======================
 		System.out.println("cbars:");
 		for(int i = 0; i < values.length; i++ ) {
@@ -384,12 +410,9 @@ public class Driver {
 			temp = temp + (newSolution[i] * objectiveFunction[i]);
 		}
 		value = temp;
+		
 		System.out.println("Obj : " + value );
 		System.out.println("-------------------------------------");
 		return newSolution;
 	}
-
-	//static boolean isUnbounded( Matrix directions ) {
-
-	//}
 }
